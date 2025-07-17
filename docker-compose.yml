@@ -88,7 +88,7 @@ services:
       - devops
 
   backend-app:
-    image: docker.io/mmouhib/kaddem:${APP_VERSION:-latest}
+    image: docker.io/sarahmami2001/kaddem:${APP_VERSION:-latest}
     container_name: backend-app
     ports:
       - "8088:8080"

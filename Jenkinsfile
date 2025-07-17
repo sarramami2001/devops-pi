@@ -17,14 +17,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Checking out source code from GitHub..."
-                checkout scm: [
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']], 
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/mmouhib/pi', 
-                    ]]
-                ]
-                // Verify checkout
+                git branch: 'main', url: 'https://github.com/sarramami2001/pi.git'
                 sh "pwd && ls -la"
             }
         }
