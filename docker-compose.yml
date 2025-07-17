@@ -1,0 +1,122 @@
+services:
+  jenkins:
+    build: ./jenkins
+    container_name: jenkins
+    user: root
+    ports:
+      - "${JENKINS_PORT}:8080"
+      - "${JENKINS_SLAVE_PORT}:50000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins/plugins.txt:/usr/share/jenkins/ref/plugins.txt
+      - ./jenkins_home:/var/jenkins_home
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - JENKINS_ADMIN_ID=${JENKINS_ADMIN_ID}
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD}
+      - TRY_UPGRADE_IF_NO_MARKER=true
+      - INSTALL_PLUGINS_FROM_FILE=/usr/share/jenkins/ref/plugins.txt
+      - COLLECTING_METRICS_PERIOD_IN_SECONDS=120
+    networks:
+      - devops
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "${SONARQUBE_PORT}:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - devops
+
+  nexus:
+    image: sonatype/nexus3
+    container_name: nexus
+    ports:
+      - "${NEXUS_PORT}:8081"
+      - "8082:8082"
+    environment:
+      - NEXUS_PROMETHEUS_ENABLED=true
+      - INSTALL4J_ADD_VM_PARAMS=-Xms512m -Xmx1024m -XX:MaxDirectMemorySize=2G
+    volumes:
+      - nexus-data:/nexus-data
+      - ./nexus/nexus.properties:/nexus-data/etc/nexus.properties
+    networks:
+      - devops
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - devops
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana-dashboards:/var/lib/grafana/dashboards
+    networks:
+      - devops
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - devops
+
+  backend-app:
+    image: docker.io/mmouhib/kaddem:${APP_VERSION:-latest}
+    container_name: backend-app
+    ports:
+      - "8088:8080"
+      - "8089:8089"
+    depends_on:
+      - mysql
+    networks:
+      - devops
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/kaddemdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-root}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
+      - MANAGEMENT_ENDPOINT_METRICS_ENABLED=true
+      - MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED=true
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
+
+volumes:
+  jenkins_home:
+  grafana-storage:
+  grafana-dashboards:
+  nexus-data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  mysql-data:
+
+networks:
+  devops:
