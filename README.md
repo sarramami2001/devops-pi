@@ -26,7 +26,7 @@
 
 1. Clone this repository:
    ```sh
-   git clone https://github.com/mmouhib/pi.git
+   git clone https://github.com/sarahmami2001/pi.git
    ```
 2. Delete the `.git` folder:
    ```sh
@@ -69,7 +69,6 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
    - **User:** `admin`
    - **Password:** `{the password you found}`
 4. Change the password to `admin` for easier access.
-   ![Show Nexus Password](docs/imgnexuspass.png)
 
 ---
 
@@ -81,8 +80,6 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
   - **ID:** `nexus-docker-credentials`
   - **Username:** `{your dockerhub username}`
   - **Password:** `{the generated token}`
-- Example:  
-  ![Docker Hub Credentials](docs/img_1.png)
 
 ---
 
@@ -103,8 +100,7 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
   - **Old password:** `admin`
   - **New password:** `+ANJ#KKrtN4S$n_`
 - Visit: [SonarQube Account Security](http://localhost:9000/account/security)
-- Add your token to `pom.xml`:  
-  ![Sonar Token in pom.xml](docs/img_6.png)
+- Add your token to `pom.xml`.
 
 ---
 
@@ -112,7 +108,6 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
 
 - Go to: [Jenkins Global Tool Configuration](http://localhost:8080/manage/configureTools/)
 - Add JDK (e.g., JDK 8 and JDK 17)
-- ![Add JDK](docs/img_3.png)
 - **DO NOT FORGET TO SAVE**
 
 ---
@@ -121,7 +116,6 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
 
 - Go to: [Jenkins Global Tool Configuration](http://localhost:8080/manage/configureTools/)
 - Add Maven
-- ![Add Maven](docs/img_4.png)
 - **DO NOT FORGET TO SAVE**
 
 ---
@@ -129,8 +123,7 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
 ## 9. Update Docker Compose for Backend App
 
 - In `docker-compose.yml`, change the image tag for the `backend-app` service:
-  - Replace `mmouhib` with your Docker Hub username.
-- ![Update Docker Compose](docs/img_9.png)
+  - Replace `sarahmami2001` with your Docker Hub username if needed.
 
 ---
 
@@ -138,7 +131,6 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
 
 - Go to: [Jenkins Configure System](http://localhost:8080/manage/configure)
 - Add the SonarQube URL.
-- ![Add Sonar URL](docs/img_5.png)
 - **DO NOT FORGET TO SAVE**
 
 ---
@@ -150,8 +142,7 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
 3. Click **OK**.
 4. In the pipeline configuration, scroll to the **Pipeline** section.
 5. Copy the content of your `Jenkinsfile` and paste it into the script box.
-6. Save the pipeline.  
-   ![Jenkins Pipeline](docs/img22.png)
+6. Save the pipeline.
 
 ---
 
@@ -159,24 +150,66 @@ docker compose up jenkins sonarqube nexus grafana prometheus -d
 
 - Go to your pipeline in Jenkins.
 - Click **"Build Now"**.
-- Monitor the build process.  
-  ![Build Now](docs/img_1343.png)
+- Monitor the build process.
 
 ---
 
-## 13. Import Grafana Dashboards
+## 13. Importer les tableaux de bord Grafana
 
-After the pipeline succeeds:
+Une fois la pipeline terminée avec succès :
 
-- Visit [Grafana Import](http://localhost:3000/dashboard/import)
-- Import the following dashboard IDs one by one:
-  ```
-  9964
-  4701
-  11378
-  16459
-  1860
-  8321
-  17642
-  ```
-- ![Grafana Dashboards](docs/img_7.png)
+- Rendez-vous sur [Grafana Import](http://localhost:3000/dashboard/import)
+- Importez les dashboards suivants (un par un) en utilisant leur ID :
+
+  - 9964
+  - 4701
+  - 11378
+  - 16459
+  - 1860
+  - 8321
+  - 17642
+
+---
+
+## 14. Stages de la pipeline Jenkins : TestDataSetup et TestAPI
+
+### TestDataSetup (optionnel)
+
+Ce stage permet d’insérer automatiquement des données de test dans la base avant d’exécuter les tests d’API. Il lance un script Java qui peuple la base avec des entités fictives (étudiants, départements, etc.).
+
+**Exemple de configuration dans le Jenkinsfile :**
+
+```groovy
+stage('TestDataSetup') {
+    steps {
+        echo "Running test data setup scripts..."
+        sh 'mvn exec:java -Dexec.mainClass="tn.esprit.spring.kaddem.TestDataSetupMain" || true'
+        echo "Test data setup scripts completed"
+    }
+}
+```
+
+> Ce stage peut être désactivé/commenté si les tests créent leurs propres données.
+
+### TestAPI
+
+Ce stage exécute les tests d’API (JUnit, Karate, etc.) pour valider le bon fonctionnement des endpoints du backend.
+
+**Exemple de configuration dans le Jenkinsfile :**
+
+```groovy
+stage('TestAPI') {
+    steps {
+        echo "Running API tests..."
+        sh 'mvn test -Dtest=ApiTest'
+        echo "API tests completed"
+    }
+    post {
+        always {
+            junit allowEmptyResults: true, testResults: "${SOURCE_CODE_PATH}/target/surefire-reports/*.xml"
+        }
+    }
+}
+```
+
+---
