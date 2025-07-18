@@ -171,6 +171,27 @@ pipeline {
                 }
             }
         }
+
+        stage('TestDataSetup') {
+            steps {
+                echo "Running test data setup scripts..."
+                sh 'mvn exec:java -Dexec.mainClass="tn.esprit.spring.kaddem.TestDataSetupMain"'
+            }
+        }
+
+        stage('TestAPI') {
+            steps {
+                echo "Running API tests..."
+                // sh 'mvn test -Dtest=ApiTest'
+                // ou pour Karate :
+                // sh 'mvn test -Dkarate.options="classpath:api-tests"'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${SOURCE_CODE_PATH}/target/surefire-reports/*.xml"
+                }
+            }
+        }
     }
     
     // post {
