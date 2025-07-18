@@ -172,19 +172,19 @@ pipeline {
             }
         }
 
-        // stage('TestDataSetup') {
-        //     steps {
-        //         echo "Running test data setup scripts..."
-        //         echo "sh 'mvn exec:java -Dexec.mainClass=\"tn.esprit.spring.kaddem.TestDataSetupMain\" || true'"
-        //         echo "Test data setup scripts completed"
-        //     }
-        // }
+        stage('TestDataSetup') {
+            steps {
+                echo "Running test data setup scripts..."
+                sh 'mvn exec:java -Dexec.mainClass="tn.esprit.spring.kaddem.TestDataSetupMain"'
+            }
+        }
 
         stage('TestAPI') {
             steps {
                 echo "Running API tests..."
-                sh 'mvn test -Dtest=ApiTest'
-                echo "API tests completed"
+                // sh 'mvn test -Dtest=ApiTest'
+                // ou pour Karate :
+                // sh 'mvn test -Dkarate.options="classpath:api-tests"'
             }
             post {
                 always {

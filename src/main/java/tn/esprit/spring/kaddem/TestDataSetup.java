@@ -58,38 +58,29 @@ public class TestDataSetup implements CommandLineRunner {
             etudiants.add(etudiantRepository.save(etu));
         }
 
-        // Création de 10 contrats, chacun lié à un étudiant (en utilisant l'entité managée)
+        // Création de 10 contrats, chacun lié à un étudiant
         for (int i = 0; i < 10; i++) {
-            Etudiant managedEtudiant = etudiantRepository.findById(etudiants.get(i).getIdEtudiant()).orElse(null);
-            if (managedEtudiant != null) {
-                Contrat contrat = new Contrat();
-                contrat.setEtudiant(managedEtudiant);
-                contratRepository.save(contrat);
-            }
+            Contrat contrat = new Contrat();
+            contrat.setEtudiant(etudiants.get(i));
+            contratRepository.save(contrat);
         }
 
-        // Lier chaque université à un département (en utilisant l'entité managée)
+        // Lier chaque université à un département (exemple simple)
         for (int i = 0; i < 10; i++) {
-            Universite managedUniv = universiteRepository.findById(univs.get(i).getIdUniv()).orElse(null);
-            Departement managedDep = departementRepository.findById(deps.get(i).getIdDepart()).orElse(null);
-            if (managedUniv != null && managedDep != null) {
-                java.util.Set<Departement> univDeps = new java.util.HashSet<>();
-                univDeps.add(managedDep);
-                managedUniv.setDepartements(univDeps);
-                universiteRepository.save(managedUniv);
-            }
+            Universite univ = univs.get(i);
+            java.util.Set<Departement> univDeps = new java.util.HashSet<>();
+            univDeps.add(deps.get(i));
+            univ.setDepartements(univDeps);
+            universiteRepository.save(univ);
         }
 
-        // Lier chaque équipe à un étudiant (en utilisant l'entité managée)
+        // Lier chaque équipe à un étudiant (exemple simple)
         for (int i = 0; i < 10; i++) {
-            Equipe managedEquipe = equipeRepository.findById(equipes.get(i).getIdEquipe()).orElse(null);
-            Etudiant managedEtudiant = etudiantRepository.findById(etudiants.get(i).getIdEtudiant()).orElse(null);
-            if (managedEquipe != null && managedEtudiant != null) {
-                java.util.Set<Etudiant> equipeEtudiants = new java.util.HashSet<>();
-                equipeEtudiants.add(managedEtudiant);
-                managedEquipe.setEtudiants(equipeEtudiants);
-                equipeRepository.save(managedEquipe);
-            }
+            Equipe equipe = equipes.get(i);
+            java.util.Set<Etudiant> equipeEtudiants = new java.util.HashSet<>();
+            equipeEtudiants.add(etudiants.get(i));
+            equipe.setEtudiants(equipeEtudiants);
+            equipeRepository.save(equipe);
         }
     }
 }
